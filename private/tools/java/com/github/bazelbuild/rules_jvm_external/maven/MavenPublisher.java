@@ -92,7 +92,6 @@ public class MavenPublisher {
 
     try {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
-      futures.add(upload(repo, credentials, coords, ".pom", pom, gpgSign));
 
       if (binJar != null) {
         futures.add(upload(repo, credentials, coords, ".jar", binJar, gpgSign));
@@ -105,6 +104,8 @@ public class MavenPublisher {
       if (docJar != null) {
         futures.add(upload(repo, credentials, coords, "-javadoc.jar", docJar, gpgSign));
       }
+
+      futures.add(upload(repo, credentials, coords, ".pom", pom, gpgSign));
 
       CompletableFuture<Void> all =
           CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
