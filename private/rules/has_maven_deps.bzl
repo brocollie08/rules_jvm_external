@@ -114,6 +114,7 @@ _gathered = provider(
         "artifact_infos",
         "transitive_exports",
         "dep_infos",
+        "artifact_coordinates",
     ],
 )
 
@@ -126,7 +127,7 @@ def _extract_from(gathered, maven_info, dep, include_transitive_exports, is_runt
     if java_info:
         if maven_info.coordinates == _STOPPED_INFO.coordinates:
             pass
-        elif maven_info.coordinates:
+        elif maven_info.coordinates and maven_info.coordinates != gathered.artifact_coordinates:
             gathered.dep_infos.append(dep[JavaInfo])
 
             own_coordinates = depset([maven_info.coordinates])
@@ -169,6 +170,7 @@ def _has_maven_deps_impl(target, ctx):
         transitive_exports = [],
         dep_infos = [],
         label_to_javainfo = {target.label: target[JavaInfo]},
+        artifact_coordinates = coordinates,
     )
 
     for attr in _ASPECT_ATTRS:
