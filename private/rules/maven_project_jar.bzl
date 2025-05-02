@@ -3,7 +3,7 @@ load("@rules_license//rules:providers.bzl", "PackageInfo")
 load("//private/lib:bzlmod.bzl", "get_module_name_of_owner_of_repo")
 load("//private/lib:coordinates.bzl", "to_external_form", "to_purl", "unpack_coordinates")
 load(":has_maven_deps.bzl", "MavenInfo", "calculate_artifact_jars", "calculate_artifact_source_jars", "has_maven_deps")
-load(":maven_utils.bzl", "determine_additional_dependencies", "unpack_coordinates")
+load(":maven_utils.bzl", "determine_additional_dependencies")
 
 DEFAULT_EXCLUDED_WORKSPACES = [
     # Note: we choose to drop the dependency entirely because
@@ -67,7 +67,7 @@ def _maven_project_jar_impl(ctx):
 
     # Merge together all the binary jars
     packaging = unpack_coordinates(info.coordinates).type or "jar"
-    bin_jar = ctx.actions.declare_file("%s.%s" % (ctx.label.name, packaging))
+    intermediate_jar = ctx.actions.declare_file("%s.%s" % (ctx.label.name, packaging))
 
     if packaging == "aar" and AndroidLibraryAarInfo in target and target[AndroidLibraryAarInfo].aar:
         artifact_jars = artifact_jars + [target[AndroidLibraryAarInfo].aar]
@@ -78,12 +78,12 @@ def _maven_project_jar_impl(ctx):
         depset(transitive =
                    [ji.transitive_runtime_jars for ji in info.dep_infos.to_list()] +
                    [jar[JavaInfo].transitive_runtime_jars for jar in ctx.attr.deploy_env]),
-        bin_jar,
+        intermediate_jar,
     )
 
     # Add manifest lines if necessary
     if len(ctx.attr.manifest_entries.items()):
-        bin_jar = ctx.actions.declare_file("amended_%s.jar" % ctx.label.name)
+        bin_jar = ctx.actions.declare_file("amended_%s.%s" % (ctx.label.name, packaging))
         args = ctx.actions.args()
         args.add_all(["--source", intermediate_jar, "--output", bin_jar])
         args.add_all(
